@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gridiron Showdown</title>
+<style>
+:root{
+  --bg:#09110d;--panel:#111b16;--panel2:#17251d;--line:#2d4938;
+  --text:#f5f7f5;--muted:#aebbb2;--green:#35c46a;--green2:#1d8f49;
+  --gold:#f2c94c;--red:#e45858;--shadow:0 14px 34px rgba(0,0,0,.28)
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:
+  radial-gradient(circle at top,#173222 0,#0b1710 38%,#07100b 100%);
+  color:var(--text);font-family:Arial,Helvetica,sans-serif;min-height:100vh
+}
+.app{width:min(1000px,calc(100% - 24px));margin:auto;padding:22px 0 50px}
+.brand{text-align:center;margin:8px 0 20px}
+.brand h1{font-size:clamp(2rem,7vw,4rem);margin:0;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+.brand p{color:var(--green);font-weight:800;letter-spacing:.25em;margin:7px 0 0;font-size:.78rem}
+.card{
+  background:linear-gradient(180deg,rgba(24,38,30,.98),rgba(15,25,19,.98));
+  border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:var(--shadow);margin-bottom:16px
+}
+.section-title{margin:0 0 15px;text-transform:uppercase;letter-spacing:.1em;font-size:.9rem;color:var(--muted)}
+.setup-grid,.team-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.setup-team{background:#0d1711;border:1px solid var(--line);border-radius:14px;padding:16px}
+.setup-team h3{margin:0 0 12px;color:var(--green)}
+label{display:block;color:var(--muted);font-size:.76rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin:12px 0 6px}
+input,select{
+  width:100%;border:1px solid #385644;background:#08100b;color:white;border-radius:10px;
+  padding:13px 12px;font-size:1rem;outline:none
+}
+input:focus,select:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(53,196,106,.12)}
+input:disabled,select:disabled{opacity:.65}
+.ability-preview{color:#d6ded8;line-height:1.45;min-height:62px;font-size:.92rem}
+button{
+  border:0;border-radius:11px;padding:12px 15px;font-size:.9rem;font-weight:900;
+  letter-spacing:.025em;cursor:pointer;transition:.16s transform,.16s filter,.16s opacity;
+  background:#26382d;color:white
+}
+button:hover:not(:disabled){filter:brightness(1.12);transform:translateY(-1px)}
+button:active:not(:disabled){transform:translateY(0)}
+button:disabled{opacity:.32;cursor:not-allowed}
+#startButton{width:100%;background:linear-gradient(180deg,var(--green),var(--green2));color:#041108;font-size:1.05rem;padding:15px}
+#startMessage{text-align:center;color:var(--muted);margin:11px 0 0}
+.scoreboard{
+  overflow:hidden;padding:0;border:1px solid #42634e;
+  background:linear-gradient(180deg,#17251d,#0b130e)
+}
+.score-head{background:#070c09;padding:9px;text-align:center;color:var(--green);font-size:.72rem;font-weight:900;letter-spacing:.25em}
+.score-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:18px 16px 12px;gap:12px}
+.score-team{text-align:center;min-width:0}
+.score-name{font-size:clamp(.9rem,3vw,1.25rem);font-weight:900;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.score{font-size:clamp(3.6rem,12vw,6.4rem);font-weight:900;line-height:.95;margin-top:7px;font-variant-numeric:tabular-nums}
+.vs{color:#6d7e72;font-size:.72rem;font-weight:900}
+.game-info{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--line)}
+.info-box{text-align:center;padding:12px 8px}
+.info-box+ .info-box{border-left:1px solid var(--line)}
+.info-label{font-size:.68rem;color:var(--muted);font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+.info-value{font-size:1.35rem;font-weight:900;margin-top:4px}
+.timeouts-row{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line)}
+.timeout-box{text-align:center;padding:12px 10px}
+.timeout-box+ .timeout-box{border-left:1px solid var(--line)}
+.timeout-dots{font-size:1.2rem;letter-spacing:.16em;color:var(--gold);font-weight:900;margin:6px 0 9px}
+.timeout-button{width:100%;padding:9px 10px;background:#26382d}
+.clock-action{padding:0 16px 16px}
+#clockButton{width:100%;background:var(--gold);color:#1c1602}
+.down-buttons,.score-buttons{display:grid;gap:8px}
+.down-buttons{grid-template-columns:repeat(4,1fr)}
+.score-buttons{grid-template-columns:repeat(5,1fr)}
+.down-buttons button{background:#213429}
+.team-card{position:relative;overflow:hidden}
+.team-card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--green)}
+.team-card h2{margin:0 0 14px;font-size:1.4rem;text-transform:uppercase}
+.score-buttons button{padding:12px 6px;font-size:.78rem}
+.ability-box{margin-top:16px;padding:14px;background:#0a120d;border:1px solid var(--line);border-radius:13px}
+.ability-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.ability-name{font-size:1.05rem;font-weight:900;color:var(--gold)}
+.status{font-size:.72rem;padding:5px 8px;border-radius:999px;background:rgba(53,196,106,.13);color:#74e49a;font-weight:900}
+.ability-box p{color:#c7d1ca;line-height:1.45;font-size:.9rem}
+.ability-button{width:100%;background:linear-gradient(180deg,#e5b93b,#b88813);color:#1b1402}
+.tools{display:grid;grid-template-columns:1fr auto;gap:10px}
+#chartButton{background:#2c4535}
+#undoButton{background:#342525;color:#f3c3c3;min-width:110px}
+#rollCharts{margin-top:16px}
+.charts-title{text-align:center;margin:0 0 18px}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.chart-card{background:#0b140e;border:1px solid var(--line);border-radius:14px;padding:14px;overflow-x:auto}
+.chart-card.wide{grid-column:1/-1}
+.chart-card h2{font-size:1.05rem;margin:0 0 8px;color:var(--green)}
+.chart-card p{color:var(--muted);font-size:.87rem;line-height:1.4}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th{background:#20382a;color:#e8f8ed;text-transform:uppercase;font-size:.72rem;letter-spacing:.06em}
+th,td{padding:9px 8px;border-bottom:1px solid #294033;text-align:left}
+tr:last-child td{border-bottom:0}
+tbody tr:nth-child(even){background:rgba(255,255,255,.025)}
+.hide-chart{width:100%;margin-top:14px}
+.sticky-controls{position:sticky;top:0;z-index:1000;background:rgba(7,12,9,.97);border:1px solid #42634e;border-radius:0 0 14px 14px;box-shadow:0 8px 24px rgba(0,0,0,.35);padding:8px 10px;margin-bottom:12px}
+.sticky-score{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-bottom:7px}
+.sticky-team{text-align:center;font-weight:900;font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sticky-score-number{color:var(--gold);font-size:1.1rem;margin-left:5px}
+.sticky-mid{text-align:center;color:var(--muted);font-size:.72rem;font-weight:900}
+.sticky-downs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.sticky-downs button{padding:8px 4px;font-size:.72rem;background:#213429}
+.sticky-downs button.active-down{background:var(--green);color:#041108}
+.sticky-clock{margin-top:6px}
+.sticky-clock button{width:100%;padding:8px 5px;font-size:.72rem;background:var(--gold);color:#1c1602}
+.sticky-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+.sticky-team-actions{min-width:0;background:#0d1711;border:1px solid var(--line);border-radius:9px;padding:6px}
+.sticky-action-label{text-align:center;font-size:.68rem;font-weight:900;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:5px}
+.sticky-score-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}
+.sticky-score-actions button{padding:7px 2px;font-size:.61rem;background:#213429}
+.sticky-timeout-button{width:100%;margin-top:4px;padding:7px 3px;font-size:.63rem;background:#342f20;color:#f6dc83}
+@media(max-width:420px){.sticky-score-actions{grid-template-columns:repeat(2,1fr)}}
+
+.game-overlay{
+ position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;
+ padding:22px;background:rgba(3,8,5,.88);backdrop-filter:blur(8px)
+}
+.game-overlay.hidden{display:none}
+.overlay-card{
+ width:min(92vw,520px);text-align:center;background:#0d1711;border:2px solid var(--green);
+ border-radius:22px;padding:28px 20px;box-shadow:0 20px 60px rgba(0,0,0,.55)
+}
+.overlay-title{font-size:clamp(2rem,10vw,4.2rem);font-weight:1000;letter-spacing:.04em;margin:0 0 8px}
+.overlay-sub{color:var(--muted);font-weight:800;margin-bottom:20px}
+.overlay-start{font-size:1.35rem;padding:16px 28px;width:100%;background:var(--green);color:#041108}
+.final-score{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;margin:20px 0}
+.final-team{font-weight:900;font-size:1rem;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.final-num{font-size:clamp(2.4rem,12vw,4.5rem);font-weight:1000;color:var(--gold)}
+.final-dash{font-size:2rem;color:var(--muted)}
+.confetti-piece{position:fixed;top:-18px;z-index:6000;width:10px;height:16px;border-radius:2px;pointer-events:none;animation:confettiFall 2.8s linear forwards}
+@keyframes confettiFall{to{transform:translate3d(var(--drift),110vh,0) rotate(900deg);opacity:.9}}
+
+.footer{text-align:center;color:#647269;font-size:.72rem;margin-top:18px;letter-spacing:.08em}
+@media(max-width:720px){
+  .app{width:min(100% - 16px,1000px);padding-top:12px}
+  .setup-grid,.team-grid,.chart-grid{grid-template-columns:1fr}
+  .chart-card.wide{grid-column:auto}
+  .score-buttons{grid-template-columns:repeat(2,1fr)}
+  .score-buttons button:first-child{grid-column:1/-1}
+  .down-buttons{grid-template-columns:repeat(2,1fr)}
+  .score-row{padding-left:9px;padding-right:9px;gap:5px}
+  .card{border-radius:14px;padding:14px}
+  .scoreboard{padding:0}
+}
+</style>
+</head>
+<body>
+
+<div class="game-overlay" id="startOverlay">
+  <div class="overlay-card">
+    <div class="overlay-title">🏈 GRIDIRON<br>SHOWDOWN</div>
+    <div class="overlay-sub">SET YOUR TEAMS, THEN KICK THINGS OFF.</div>
+    <button class="overlay-start" id="bigStartButton" onclick="closeWelcome()">ENTER GAME</button>
+  </div>
+</div>
+
+<div class="game-overlay hidden" id="kickoffOverlay">
+  <div class="overlay-card">
+    <div class="overlay-sub">GRIDIRON SHOWDOWN</div>
+    <div class="overlay-title" id="kickoffMatchup">HOME<br>VS<br>AWAY</div>
+    <div class="overlay-sub">IT'S GAME TIME.</div>
+    <button class="overlay-start" onclick="closeKickoffIntro()">KICK OFF 🏈</button>
+  </div>
+</div>
+
+<div class="game-overlay hidden" id="halftimeOverlay">
+  <div class="overlay-card">
+    <div class="overlay-sub">END OF THE 2ND QUARTER</div>
+    <div class="overlay-title">HALFTIME</div>
+    <div class="final-score">
+      <div><div class="final-team" id="halfHomeName">HOME</div><div class="final-num" id="halfHomeScore">0</div></div>
+      <div class="final-dash">–</div>
+      <div><div class="final-team" id="halfAwayName">AWAY</div><div class="final-num" id="halfAwayScore">0</div></div>
+    </div>
+    <div class="overlay-sub">TIMEOUTS RESET • SECOND HALF READY</div>
+    <button class="overlay-start" onclick="closeHalftime()">START 2ND HALF</button>
+  </div>
+</div>
+
+<div class="game-overlay hidden" id="finalOverlay">
+  <div class="overlay-card">
+    <div class="overlay-title">FINAL</div>
+    <div class="final-score">
+      <div>
+        <div class="final-team" id="finalHomeName">HOME</div>
+        <div class="final-num" id="finalHomeScore">0</div>
+      </div>
+      <div class="final-dash">–</div>
+      <div>
+        <div class="final-team" id="finalAwayName">AWAY</div>
+        <div class="final-num" id="finalAwayScore">0</div>
+      </div>
+    </div>
+    <div class="overlay-sub" id="finalMessage">WHAT A GAME!</div>
+    <button class="overlay-start" onclick="closeFinalOverlay()">VIEW GAME</button>
+  </div>
+</div>
+
+<div class="app">
+
+<header class="brand">
+  <h1>🏈 Gridiron Showdown</h1>
+  <p>TABLETOP FOOTBALL</p>
+</header>
+
+<section class="sticky-controls">
+  <div class="sticky-score">
+    <div class="sticky-team"><span id="stickyHomeName">HOME</span><span class="sticky-score-number" id="stickyHomeScore">0</span></div>
+    <div class="sticky-mid"><span id="stickyQuarter">Q1</span> • DOWN <span id="stickyDown">1</span></div>
+    <div class="sticky-team"><span id="stickyAwayName">AWAY</span><span class="sticky-score-number" id="stickyAwayScore">0</span></div>
+  </div>
+  <div class="sticky-downs">
+    <button class="stickyDownButton" onclick="setDown(1)" disabled>1ST</button>
+    <button class="stickyDownButton" onclick="setDown(2)" disabled>2ND</button>
+    <button class="stickyDownButton" onclick="setDown(3)" disabled>3RD</button>
+    <button class="stickyDownButton" onclick="setDown(4)" disabled>4TH</button>
+  </div>
+  <div class="sticky-clock">
+    <button id="stickyClockButton" onclick="lowerClock()" disabled>⏱ CLOCK -1 &nbsp; • &nbsp; <span id="stickyClock">12</span> LEFT</button>
+  </div>
+  <div class="sticky-actions">
+    <div class="sticky-team-actions">
+      <div class="sticky-action-label"><span id="stickyHomeActionName">HOME</span></div>
+      <div class="sticky-score-actions">
+        <button class="stickyGameControl" onclick="addHomeScore(6)" disabled>TD +6</button>
+        <button class="stickyGameControl" onclick="addHomeScore(3)" disabled>FG +3</button>
+        <button class="stickyGameControl" onclick="addHomeScore(1)" disabled>+1</button>
+        <button class="stickyGameControl" onclick="addHomeScore(2)" disabled>+2</button>
+      </div>
+      <button class="sticky-timeout-button" id="stickyHomeTimeoutButton" onclick="useTimeout('home')" disabled>TIMEOUT • <span id="stickyHomeTimeouts">3</span></button>
+    </div>
+    <div class="sticky-team-actions">
+      <div class="sticky-action-label"><span id="stickyAwayActionName">AWAY</span></div>
+      <div class="sticky-score-actions">
+        <button class="stickyGameControl" onclick="addAwayScore(6)" disabled>TD +6</button>
+        <button class="stickyGameControl" onclick="addAwayScore(3)" disabled>FG +3</button>
+        <button class="stickyGameControl" onclick="addAwayScore(1)" disabled>+1</button>
+        <button class="stickyGameControl" onclick="addAwayScore(2)" disabled>+2</button>
+      </div>
+      <button class="sticky-timeout-button" id="stickyAwayTimeoutButton" onclick="useTimeout('away')" disabled>TIMEOUT • <span id="stickyAwayTimeouts">3</span></button>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="section-title">Game Setup</div>
+  <div class="setup-grid">
+    <div class="setup-team">
+      <h3 id="homeSetupName">HOME</h3>
+      <label for="homeName">Home Team</label>
+      <input id="homeName" type="text" value="HOME" maxlength="25" oninput="updateTeamNames()">
+      <label for="homeAbility">Ability</label>
+      <select id="homeAbility" onchange="changeAbility('home')">
+        <option value="">Choose Ability</option>
+        <option>Gunslinger</option><option>Stampede</option><option>Stuffed</option><option>No Fly Zone</option>
+        <option>Venom Strike</option><option>Ice Cold</option><option>No Fear</option><option>Deep Shot</option>
+        <option>Bull Rush</option><option>Desert Storm</option><option>All-Out Blitz</option><option>House Call</option>
+        <option>Frozen Pocket</option><option>Audible</option><option>Second Effort</option><option>Automatic Two</option>
+      </select>
+      <p class="ability-preview" id="homeAbilityDescription">Choose an ability to see its effect.</p>
+    </div>
+    <div class="setup-team">
+      <h3 id="awaySetupName">AWAY</h3>
+      <label for="awayName">Away Team</label>
+      <input id="awayName" type="text" value="AWAY" maxlength="25" oninput="updateTeamNames()">
+      <label for="awayAbility">Ability</label>
+      <select id="awayAbility" onchange="changeAbility('away')">
+        <option value="">Choose Ability</option>
+        <option>Gunslinger</option><option>Stampede</option><option>Stuffed</option><option>No Fly Zone</option>
+        <option>Venom Strike</option><option>Ice Cold</option><option>No Fear</option><option>Deep Shot</option>
+        <option>Bull Rush</option><option>Desert Storm</option><option>All-Out Blitz</option><option>House Call</option>
+        <option>Frozen Pocket</option><option>Audible</option><option>Second Effort</option><option>Automatic Two</option>
+      </select>
+      <p class="ability-preview" id="awayAbilityDescription">Choose an ability to see its effect.</p>
+    </div>
+  </div>
+  <button id="startButton" onclick="startGame()">🏈 START GAME</button>
+  <p id="startMessage">Enter team names and choose an ability for each team.</p>
+</section>
+
+<section class="card scoreboard">
+  <div class="score-head">LIVE SCOREBOARD</div>
+  <div class="score-row">
+    <div class="score-team"><div class="score-name" id="homeScoreName">HOME</div><div class="score" id="homeScore">0</div></div>
+    <div class="vs">VS</div>
+    <div class="score-team"><div class="score-name" id="awayScoreName">AWAY</div><div class="score" id="awayScore">0</div></div>
+  </div>
+  <div class="game-info">
+    <div class="info-box"><div class="info-label">Quarter</div><div class="info-value" id="quarterDisplay">1</div></div>
+    <div class="info-box"><div class="info-label">Clock</div><div class="info-value" id="clockDisplay">12</div></div>
+    <div class="info-box"><div class="info-label">Down</div><div class="info-value" id="downDisplay">1</div></div>
+  </div>
+  <div class="timeouts-row">
+    <div class="timeout-box">
+      <div class="info-label"><span id="homeTimeoutName">HOME</span> Timeouts</div>
+      <div class="timeout-dots" id="homeTimeoutDisplay">● ● ●</div>
+      <button class="timeout-button" id="homeTimeoutButton" onclick="useTimeout('home')" disabled>USE TIMEOUT</button>
+    </div>
+    <div class="timeout-box">
+      <div class="info-label"><span id="awayTimeoutName">AWAY</span> Timeouts</div>
+      <div class="timeout-dots" id="awayTimeoutDisplay">● ● ●</div>
+      <button class="timeout-button" id="awayTimeoutButton" onclick="useTimeout('away')" disabled>USE TIMEOUT</button>
+    </div>
+  </div>
+  <div class="clock-action"><button id="clockButton" onclick="lowerClock()" disabled>⏱ CLOCK -1</button></div>
+</section>
+
+<section class="card">
+  <div class="section-title">Set Down</div>
+  <div class="down-buttons">
+    <button class="gameControl" onclick="setDown(1)" disabled>1ST DOWN</button>
+    <button class="gameControl" onclick="setDown(2)" disabled>2ND DOWN</button>
+    <button class="gameControl" onclick="setDown(3)" disabled>3RD DOWN</button>
+    <button class="gameControl" onclick="setDown(4)" disabled>4TH DOWN</button>
+  </div>
+</section>
+
+<div class="team-grid">
+  <section class="card team-card">
+    <h2 id="homeButtonName">HOME</h2>
+    <div class="score-buttons">
+      <button class="gameControl" onclick="addHomeScore(6)" disabled>TD +6</button>
+      <button class="gameControl" onclick="addHomeScore(1)" disabled>PAT +1</button>
+      <button class="gameControl" onclick="addHomeScore(2)" disabled>2 PT +2</button>
+      <button class="gameControl" onclick="addHomeScore(3)" disabled>FG +3</button>
+      <button class="gameControl" onclick="addHomeScore(2)" disabled>SAFETY +2</button>
+    </div>
+    <div class="ability-box">
+      <div class="ability-top">
+        <div><div class="section-title" style="margin-bottom:4px">Selected Ability</div><div class="ability-name" id="homeSelectedAbility">None</div></div>
+        <span class="status" id="homeAbilityStatus">READY</span>
+      </div>
+      <p id="homeGameAbilityDescription">No ability selected.</p>
+      <button class="ability-button" id="homeAbilityButton" onclick="useAbility('home')" disabled>⚡ USE ABILITY</button>
+    </div>
+  </section>
+
+  <section class="card team-card">
+    <h2 id="awayButtonName">AWAY</h2>
+    <div class="score-buttons">
+      <button class="gameControl" onclick="addAwayScore(6)" disabled>TD +6</button>
+      <button class="gameControl" onclick="addAwayScore(1)" disabled>PAT +1</button>
+      <button class="gameControl" onclick="addAwayScore(2)" disabled>2 PT +2</button>
+      <button class="gameControl" onclick="addAwayScore(3)" disabled>FG +3</button>
+      <button class="gameControl" onclick="addAwayScore(2)" disabled>SAFETY +2</button>
+    </div>
+    <div class="ability-box">
+      <div class="ability-top">
+        <div><div class="section-title" style="margin-bottom:4px">Selected Ability</div><div class="ability-name" id="awaySelectedAbility">None</div></div>
+        <span class="status" id="awayAbilityStatus">READY</span>
+      </div>
+      <p id="awayGameAbilityDescription">No ability selected.</p>
+      <button class="ability-button" id="awayAbilityButton" onclick="useAbility('away')" disabled>⚡ USE ABILITY</button>
+    </div>
+  </section>
+</div>
+
+<section class="card">
+  <div class="tools">
+    <button id="chartButton" onclick="toggleCharts()">📋 SHOW ROLL CHARTS</button>
+    <button id="undoButton" onclick="undo()" disabled>↩ UNDO</button>
+  </div>
+
+  <div id="rollCharts" style="display:none">
+    <h1 class="charts-title">📋 Roll Charts</h1>
+    <div class="chart-grid">
+
+      <div class="chart-card wide">
+        <h2>🏈 Offensive Play Chart</h2>
+        <p>Offense declares <strong>RUN</strong> or <strong>PASS</strong> before rolling.</p>
+        <table><thead><tr><th>Roll</th><th>Run</th><th>Pass</th></tr></thead><tbody>
+          <tr><td>2</td><td>Fumble</td><td>Interception</td></tr>
+          <tr><td>3</td><td>-3 yards</td><td>Sack, -7 yards</td></tr>
+          <tr><td>4</td><td>+2 yards</td><td>Incomplete</td></tr>
+          <tr><td>5</td><td>+3 yards</td><td>Incomplete</td></tr>
+          <tr><td>6</td><td>+4 yards</td><td>+5 yards</td></tr>
+          <tr><td>7</td><td>+5 yards</td><td>+7 yards</td></tr>
+          <tr><td>8</td><td>+7 yards</td><td>+10 yards</td></tr>
+          <tr><td>9</td><td>+10 yards</td><td>+15 yards</td></tr>
+          <tr><td>10</td><td>+15 yards</td><td>+25 yards</td></tr>
+          <tr><td>11</td><td>+25 yards</td><td>+40 yards</td></tr>
+          <tr><td>12</td><td>Touchdown</td><td>Touchdown</td></tr>
+        </tbody></table>
+      </div>
+
+      <div class="chart-card">
+        <h2>🛡️ Defensive Call</h2>
+        <p>Defense secretly chooses <strong>RUN</strong> or <strong>PASS</strong>.</p>
+        <table><thead><tr><th>Call</th><th>Result</th></tr></thead><tbody>
+          <tr><td>Correct</td><td>-1 from offense's roll before checking chart</td></tr>
+          <tr><td>Wrong</td><td>No change</td></tr>
+        </tbody></table>
+      </div>
+
+      <div class="chart-card">
+        <h2>🔄 Turnovers</h2>
+        <table><thead><tr><th>Roll</th><th>Result</th></tr></thead><tbody>
+          <tr><td>2–10</td><td>Defense takes possession at previous line of scrimmage</td></tr>
+          <tr><td>11–12</td><td>Defensive touchdown — 6 points</td></tr>
+        </tbody></table>
+      </div>
+
+      <div class="chart-card">
+        <h2>🥅 Field Goals</h2>
+        <p>Based on the line of scrimmage.</p>
+        <table><thead><tr><th>Field Position</th><th>Needed</th></tr></thead><tbody>
+          <tr><td>Opponent's 1–20</td><td>3+</td></tr>
+          <tr><td>Opponent's 21–30</td><td>4+</td></tr>
+          <tr><td>Opponent's 31–40</td><td>6+</td></tr>
+          <tr><td>Opponent's 41–45</td><td>9+</td></tr>
+          <tr><td>Beyond opponent's 45</td><td>11+</td></tr>
+        </tbody></table>
+      </div>
+
+      <div class="chart-card">
+        <h2>🏈 Punt</h2>
+        <table><thead><tr><th>Roll</th><th>Result</th></tr></thead><tbody>
+          <tr><td>2</td><td>Blocked — opponent takes over at current line of scrimmage</td></tr>
+          <tr><td>3</td><td>25 yards</td></tr><tr><td>4</td><td>30 yards</td></tr>
+          <tr><td>5</td><td>35 yards</td></tr><tr><td>6</td><td>40 yards</td></tr>
+          <tr><td>7</td><td>45 yards</td></tr><tr><td>8</td><td>45 yards</td></tr>
+          <tr><td>9</td><td>50 yards</td></tr><tr><td>10</td><td>55 yards</td></tr>
+          <tr><td>11</td><td>60 yards</td></tr><tr><td>12</td><td>65 yards</td></tr>
+        </tbody></table>
+      </div>
+
+      <div class="chart-card">
+        <h2>🚀 Normal Kickoff</h2>
+        <table><thead><tr><th>Roll</th><th>Result</th></tr></thead><tbody>
+          <tr><td>2</td><td>Return fumble — kicking team gets ball at receiving team's 20</td></tr>
+          <tr><td>3–11</td><td>Normal kickoff — receiving team starts at its 25</td></tr>
+          <tr><td>12</td><td>Kick-return touchdown!</td></tr>
+        </tbody></table>
+      </div>
+
+      <div class="chart-card">
+        <h2>⭐ Onside Kick</h2>
+        <table><thead><tr><th>Roll</th><th>Result</th></tr></thead><tbody>
+          <tr><td>2–9</td><td>Failed — receiving team takes over at kicking team's 45</td></tr>
+          <tr><td>10–12</td><td>Recovered — kicking team takes over at its own 45</td></tr>
+        </tbody></table>
+      </div>
+
+      <div class="chart-card">
+        <h2>🥅 PAT</h2>
+        <table><thead><tr><th>Roll</th><th>Result</th></tr></thead><tbody>
+          <tr><td>2</td><td>Miss</td></tr><tr><td>3–12</td><td>Good — +1 point</td></tr>
+        </tbody></table>
+      </div>
+
+      <div class="chart-card">
+        <h2>✌️ Two-Point Conversion — 1d6</h2>
+        <table><thead><tr><th>Roll</th><th>Result</th></tr></thead><tbody>
+          <tr><td>1, 3, 5</td><td>No good</td></tr><tr><td>2, 4, 6</td><td>Good — +2 points</td></tr>
+        </tbody></table>
+      </div>
+    </div>
+    <button class="hide-chart" onclick="toggleCharts()">❌ HIDE ROLL CHARTS</button>
+  </div>
+</section>
+
+<div class="footer">GRIDIRON SHOWDOWN • COMPANION SCOREBOARD</div>
+</div>
+
+<script>
+let homeScore=0,awayScore=0,quarter=1,clock=12,down=1;
+let homeTimeouts=3,awayTimeouts=3;
+let gameStarted=false,gameOver=false,overtime=false;
+let homeAbilityUsed=false,awayAbilityUsed=false;
+let lockedHomeAbility="",lockedAwayAbility="";
+let history=[];
+
+const abilities={
+"Gunslinger":"After your Pass roll, reroll both dice. You must use the new result. Cannot be used if the original roll causes a turnover.",
+"Stampede":"After your Run roll, reroll both dice. You must use the new result. Cannot be used if the original roll causes a turnover.",
+"Stuffed":"After an opponent's Run roll, force them to reroll both dice. They must use the new result.",
+"No Fly Zone":"After an opponent's Pass roll, force them to reroll the higher die. The new result must be used. If tied, choose either die.",
+"Venom Strike":"After forcing an interception or fumble, add +10 yards to the turnover return.",
+"Ice Cold":"After missing a field goal, reroll the field-goal attempt. You must use the new result.",
+"No Fear":"After failing a 4th-down conversion, reroll both dice for the same offensive play. The original defensive modifier still applies.",
+"Deep Shot":"Before a Pass roll, declare Deep Shot. If completed for positive yardage, add +10 yards. A sack, interception, or incompletion spends the ability with no bonus.",
+"Bull Rush":"On 3rd or 4th down, add +2 to your Run roll. Declare before the roll.",
+"Desert Storm":"When trailing in the second half, add +2 to your Run or Pass roll. Declare before the roll.",
+"All-Out Blitz":"Subtract 1 from the offense's roll, regardless of Run or Pass. Must declare after each team locks in their play and before the roll.",
+"House Call":"Before a kickoff-return roll, declare House Call. Add +2 to the kickoff-return roll.",
+"Frozen Pocket":"After an opponent's Pass results in an incompletion, change it to a sack for -7 yards.",
+"Audible":"Add +2 to the offense's roll. The normal defensive modifier still applies.",
+"Second Effort":"After your Run or Pass gains positive yardage, add +5 yards to the play.",
+"Automatic Two":"After scoring a touchdown, automatically succeed on a 2-point conversion. No roll required."
+};
+
+function saveState(){
+ history.push({homeScore,awayScore,quarter,clock,down,homeTimeouts,awayTimeouts,gameStarted,gameOver,overtime,homeAbilityUsed,awayAbilityUsed});
+ updateUndoButton();
+}
+function getNames(){
+ return {
+  home:document.getElementById("homeName").value.trim()||"HOME",
+  away:document.getElementById("awayName").value.trim()||"AWAY"
+ };
+}
+function updateTeamNames(){
+ const n=getNames();
+ ["homeButtonName","homeSetupName","homeScoreName","homeTimeoutName"].forEach(id=>document.getElementById(id).innerText=n.home);
+ ["awayButtonName","awaySetupName","awayScoreName","awayTimeoutName"].forEach(id=>document.getElementById(id).innerText=n.away);
+}
+function changeAbility(team){
+ if(gameStarted)return;
+ const ability=document.getElementById(team+"Ability").value;
+ document.getElementById(team+"AbilityDescription").innerText=ability?abilities[ability]:"Choose an ability to see its effect.";
+}
+function startGame(){
+ if(gameStarted)return;
+ const homeChoice=document.getElementById("homeAbility").value;
+ const awayChoice=document.getElementById("awayAbility").value;
+ if(!homeChoice||!awayChoice){
+  document.getElementById("startMessage").innerText="Both teams must choose an ability before starting.";
+  return;
+ }
+ lockedHomeAbility=homeChoice;lockedAwayAbility=awayChoice;gameStarted=true;
+ ["homeName","awayName","homeAbility","awayAbility","startButton"].forEach(id=>document.getElementById(id).disabled=true);
+ document.getElementById("startButton").innerText="GAME IN PROGRESS";
+ document.getElementById("startMessage").innerText="Team names and abilities are locked in.";
+ document.getElementById("homeSelectedAbility").innerText=lockedHomeAbility;
+ document.getElementById("awaySelectedAbility").innerText=lockedAwayAbility;
+ document.getElementById("homeGameAbilityDescription").innerText=abilities[lockedHomeAbility];
+ document.getElementById("awayGameAbilityDescription").innerText=abilities[lockedAwayAbility];
+ updateScreen();
+
+ setTimeout(showKickoffIntro,120);
+}
+function useAbility(team){
+ if(!gameStarted||gameOver)return;
+ if((team==="home"&&homeAbilityUsed)||(team==="away"&&awayAbilityUsed))return;
+ saveState();
+ if(team==="home")homeAbilityUsed=true;else awayAbilityUsed=true;
+ updateScreen();
+}
+function updateAbilityButtons(){
+ [["home",homeAbilityUsed],["away",awayAbilityUsed]].forEach(([team,used])=>{
+  const b=document.getElementById(team+"AbilityButton");
+  const s=document.getElementById(team+"AbilityStatus");
+  if(used){s.innerText="USED ✓";b.innerText="ABILITY USED";b.disabled=true}
+  else{s.innerText="READY";b.innerText="⚡ USE ABILITY";b.disabled=!gameStarted||gameOver}
+ });
+}
+function timeoutDots(count){
+ return count>0 ? Array(count).fill("●").join(" ") : "NONE";
+}
+function useTimeout(team){
+ if(!gameStarted||gameOver)return;
+ if((team==="home"&&homeTimeouts<=0)||(team==="away"&&awayTimeouts<=0))return;
+ saveState();
+ if(team==="home")homeTimeouts--;else awayTimeouts--;
+ updateScreen();
+}
+function updateTimeouts(){
+ document.getElementById("homeTimeoutDisplay").innerText=timeoutDots(homeTimeouts);
+ document.getElementById("awayTimeoutDisplay").innerText=timeoutDots(awayTimeouts);
+ document.getElementById("homeTimeoutButton").disabled=!gameStarted||gameOver||homeTimeouts<=0;
+ document.getElementById("awayTimeoutButton").disabled=!gameStarted||gameOver||awayTimeouts<=0;
+}
+
+function updateGameControls(){
+ document.querySelectorAll(".gameControl").forEach(b=>b.disabled=!gameStarted||gameOver);
+ document.getElementById("clockButton").disabled=!gameStarted||gameOver;
+ updateAbilityButtons();
+ updateTimeouts();
+}
+function updateStickyControls(){
+ const n=getNames();
+ document.getElementById("stickyHomeName").innerText=n.home;
+ document.getElementById("stickyAwayName").innerText=n.away;
+ document.getElementById("stickyHomeScore").innerText=homeScore;
+ document.getElementById("stickyAwayScore").innerText=awayScore;
+ document.getElementById("stickyQuarter").innerText=gameOver?"FINAL":(overtime?"OT":"Q"+quarter);
+ document.getElementById("stickyDown").innerText=down;
+ document.getElementById("stickyClock").innerText=clock;
+ document.getElementById("stickyClockButton").disabled=!gameStarted||gameOver;
+ document.getElementById("stickyHomeActionName").innerText=n.home;
+ document.getElementById("stickyAwayActionName").innerText=n.away;
+ document.getElementById("stickyHomeTimeouts").innerText=homeTimeouts;
+ document.getElementById("stickyAwayTimeouts").innerText=awayTimeouts;
+ document.querySelectorAll(".stickyGameControl").forEach(b=>b.disabled=!gameStarted||gameOver);
+ document.getElementById("stickyHomeTimeoutButton").disabled=!gameStarted||gameOver||homeTimeouts<=0;
+ document.getElementById("stickyAwayTimeoutButton").disabled=!gameStarted||gameOver||awayTimeouts<=0;
+ document.querySelectorAll(".stickyDownButton").forEach((b,i)=>{
+   b.disabled=!gameStarted||gameOver;
+   b.classList.toggle("active-down",i+1===down);
+ });
+}
+
+
+function closeWelcome(){
+ document.getElementById("startOverlay").classList.add("hidden");
+}
+
+function beginFromOverlay(){
+ // Kept for compatibility with older markup.
+ closeWelcome();
+}
+
+function showKickoffIntro(){
+ const n=getNames();
+ document.getElementById("kickoffMatchup").innerHTML=n.home+"<br><span style='color:var(--muted);font-size:.55em'>VS</span><br>"+n.away;
+ document.getElementById("kickoffOverlay").classList.remove("hidden");
+}
+
+function closeKickoffIntro(){
+ document.getElementById("kickoffOverlay").classList.add("hidden");
+}
+
+function showHalftime(){
+ const n=getNames();
+ document.getElementById("halfHomeName").innerText=n.home;
+ document.getElementById("halfAwayName").innerText=n.away;
+ document.getElementById("halfHomeScore").innerText=homeScore;
+ document.getElementById("halfAwayScore").innerText=awayScore;
+ document.getElementById("halftimeOverlay").classList.remove("hidden");
+}
+
+function closeHalftime(){
+ document.getElementById("halftimeOverlay").classList.add("hidden");
+}
+
+function closeFinalOverlay(){
+ document.getElementById("finalOverlay").classList.add("hidden");
+}
+
+function launchConfetti(){
+ const colors=["#f4d35e","#39d353","#ffffff","#ff6b6b","#63b3ed","#b794f4"];
+ for(let i=0;i<90;i++){
+   const p=document.createElement("div");
+   p.className="confetti-piece";
+   p.style.left=(Math.random()*100)+"vw";
+   p.style.background=colors[Math.floor(Math.random()*colors.length)];
+   p.style.setProperty("--drift",((Math.random()*240)-120)+"px");
+   p.style.animationDelay=(Math.random()*.7)+"s";
+   p.style.animationDuration=(2.1+Math.random()*1.8)+"s";
+   document.body.appendChild(p);
+   setTimeout(()=>p.remove(),4500);
+ }
+}
+
+let finalCelebrationShown=false;
+let halftimeShown=false;
+function showFinalCelebration(){
+ if(finalCelebrationShown) return;
+ finalCelebrationShown=true;
+ const n=getNames();
+ document.getElementById("finalHomeName").innerText=n.home;
+ document.getElementById("finalAwayName").innerText=n.away;
+ document.getElementById("finalHomeScore").innerText=homeScore;
+ document.getElementById("finalAwayScore").innerText=awayScore;
+ let msg="WHAT A GAME!";
+ if(homeScore>awayScore) msg=n.home+" WINS!";
+ else if(awayScore>homeScore) msg=n.away+" WINS!";
+ else msg="TIE GAME!";
+ document.getElementById("finalMessage").innerText=msg;
+ document.getElementById("finalOverlay").classList.remove("hidden");
+ launchConfetti();
+}
+
+function updateScreen(){
+ document.getElementById("homeScore").innerText=homeScore;
+ document.getElementById("awayScore").innerText=awayScore;
+ document.getElementById("clockDisplay").innerText=clock;
+ document.getElementById("downDisplay").innerText=down;
+ const q=document.getElementById("quarterDisplay");
+ if(gameOver){
+  q.innerText="FINAL";
+  document.getElementById("startButton").innerText="GAME OVER";
+  document.getElementById("startMessage").innerText="Final Score: "+homeScore+" - "+awayScore;
+ }else if(overtime){q.innerText="OT"}else{q.innerText=quarter}
+ updateTeamNames();updateGameControls();updateStickyControls();updateUndoButton();
+ if(gameOver) setTimeout(showFinalCelebration,150);
+ if(gameStarted && !gameOver && !overtime && quarter===3 && !halftimeShown){
+   halftimeShown=true;
+   setTimeout(showHalftime,150);
+ }
+}
+function addHomeScore(points){if(!gameStarted||gameOver)return;saveState();homeScore+=points;updateScreen()}
+function addAwayScore(points){if(!gameStarted||gameOver)return;saveState();awayScore+=points;updateScreen()}
+function setDown(newDown){if(!gameStarted||gameOver)return;saveState();down=newDown;updateScreen()}
+function lowerClock(){
+ if(!gameStarted||gameOver)return;
+ saveState();clock--;
+ if(clock<=0){
+  if(!overtime){
+   if(quarter<4){quarter++;clock=12;if(quarter===3){homeTimeouts=3;awayTimeouts=3}}
+   else if(homeScore===awayScore){overtime=true;clock=12}
+   else{gameOver=true;clock=0}
+  }else{
+   if(homeScore!==awayScore){gameOver=true;clock=0}else{clock=12}
+  }
+ }
+ updateScreen();
+}
+function toggleCharts(){
+ const charts=document.getElementById("rollCharts"),button=document.getElementById("chartButton");
+ const opening=charts.style.display==="none";
+ charts.style.display=opening?"block":"none";
+ button.innerText=opening?"📋 HIDE ROLL CHARTS":"📋 SHOW ROLL CHARTS";
+ if(opening)charts.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function undo(){
+ if(!history.length)return;
+ const p=history.pop();
+ homeScore=p.homeScore;awayScore=p.awayScore;quarter=p.quarter;clock=p.clock;down=p.down;
+  homeTimeouts=p.homeTimeouts;awayTimeouts=p.awayTimeouts;
+ gameStarted=p.gameStarted;gameOver=p.gameOver;overtime=p.overtime;
+ homeAbilityUsed=p.homeAbilityUsed;awayAbilityUsed=p.awayAbilityUsed;
+ updateScreen();
+}
+function updateUndoButton(){document.getElementById("undoButton").disabled=history.length===0}
+changeAbility("home");changeAbility("away");updateTeamNames();updateScreen();
+</script>
+</body>
+</html>
